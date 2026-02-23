@@ -1,57 +1,86 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
     <title>Simple Todo</title>
+    </head>
+    <body>
 
-</head>
-<body>
+        <h1>Tasks</h1>
 
-    <h1>Tasks</h1>
+        <div class="input-group">
+            <input id="newtask" type="text" placeholder="What needs to be done?">
+            <button id="add-btn" onclick="add()">Add</button>
+        </div>
 
-    <div class="input-group">
-        <input id="newtask" type="text" placeholder="What needs to be done?">
-        <button id="add-btn" onclick="add()">Add</button>
-    </div>
+        <ul id="tasks"></ul>
 
-    <ul id="tasks"></ul>
+        <script>
+            const input = document.getElementById("newtask");
+            const list = document.getElementById("tasks");
 
-    <script>
-        const input = document.getElementById("newtask");
-        const list = document.getElementById("tasks");
+            function loadTasks() {
+                const saved = localStorage.getItem("todo-tasks");
+                if (saved) {
+                    JSON.parse(saved).forEach(task => addTask(task.text, task.done));
+                }
+            }
 
-        function add() {
-            const txt = input.value.trim();
-            if (txt === "") return;
+            function saveTasks() {
+                const tasks = [];
+                list.querySelectorAll("li").forEach(li => {
+                    tasks.push({
+                        text: li.querySelector(".task").innerText,
+                        done: li.querySelector("input[type=checkbox]").checked
+                    });
+                });
+                localStorage.setItem("todo-tasks", JSON.stringify(tasks));
+            }
 
-            const item = document.createElement("li");
-            
-            const check = document.createElement("input");
-            check.type = "checkbox";
-            check.onchange = () => {
-                item.classList.toggle("done", check.checked);
-            };
+            function addTask(text, done = false) {
+                const item = document.createElement("li");
+                
+                const check = document.createElement("input");
+                check.type = "checkbox";
+                check.checked = done;
+                check.onchange = () => {
+                    item.classList.toggle("done", check.checked);
+                    saveTasks();
+                };
 
-            const text = document.createElement("span");
-            text.className = "task";
-            text.innerText = txt;
+                const textSpan = document.createElement("span");
+                textSpan.className = "task";
+                textSpan.innerText = text;
 
-            const del = document.createElement("button");
-            del.innerHTML = "&times;";
-            del.className = "del";
-            del.onclick = () => item.remove();
+                const del = document.createElement("button");
+                del.innerHTML = "&times;";
+                del.className = "del";
+                del.onclick = () => {
+                    item.remove();
+                    saveTasks();
+                };
 
-            item.append(check, text, del);
-            list.appendChild(item);
-            
-            input.value = "";
-            input.focus();
-        }
+                item.append(check, textSpan, del);
+                if (done) item.classList.add("done");
+                list.appendChild(item);
+            }
 
-        input.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") add();
-        });
-    </script>
+            function add() {
+                const txt = input.value.trim();
+                if (txt === "") return;
 
-</body>
-</html>
+                addTask(txt, false);
+                saveTasks();
+
+                input.value = "";
+                input.focus();
+            }
+
+            input.addEventListener("keypress", (e) => {
+                if (e.key === "Enter") add();
+            });
+
+            loadTasks();
+        </script>
+
+    </body>
+    </html>
